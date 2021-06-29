@@ -1,0 +1,540 @@
+  #include <iostream>
+#include<Windows.h>
+#include <iomanip> //setw(), left
+#include <conio.h> //_kbhit(), _getch()
+#include <time.h> //clock()
+#include<string>
+#include<random>
+
+using namespace std;
+
+enum Keys {
+    KEY_UP = 72,
+    KEY_DOWN = 80,
+    KEY_LEFT = 75,
+    KEY_RIGHT = 77,
+    KEY_ENTER = 13,
+    KEY_SPACE = 32,
+    KEY_L = 76,
+    KEY_R = 82,
+    KEY_U = 85
+};
+
+enum MenuItems {
+    PLAY, CREATOR, INSTRUCTION, EXIT,
+};
+
+
+enum Colors {
+    BLACK, BLUE, GREEN, CYAN, RED, PURPLE, ORANGE, GRAY, WHITE,
+    LIGHT_BLUE, LIGHT_GREEN, LIGHT_CYAN, LIGHT_RED, LIGHT_PURPLE,
+    LIGHT_YELLOW, LIGHT_WHITE
+};
+
+struct Player {
+
+    const char icon = char(2);
+    const char gunIcon = char(27);
+    size_t x = 25;
+    size_t y = 7;
+    size_t o;
+    size_t p;
+
+};
+struct Enemy {
+    const char icon = char(1);
+    size_t x[7];
+    size_t y[7];
+};
+
+
+void setCursorColor(int backColor, int foreColor) {
+    HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
+    SetConsoleTextAttribute(handle, backColor << 4 | foreColor);
+};
+
+
+void setCursorPosition(int x, int y) {
+    HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
+    COORD cd = { x, y };
+    SetConsoleCursorPosition(handle, cd);
+};
+
+void INSTRUCTION1() {
+    system("cls");
+    setCursorColor(BLACK, LIGHT_YELLOW);
+    cout << setw(58) << "Button" << endl << endl;
+    cout << left;
+    cout << setw(30) << " Key F-Shot left" << setw(30) << "Key T-Shot right" << setw(30) << "Key B-Shot up" << setw(30) << "Key K-Shot down" << endl;
+    setCursorColor(BLACK, LIGHT_GREEN);
+    cout << "________________________________________________________________________________________________________________________";
+    cout << right;
+    cout << setw(57) << "Tank" << endl << endl;
+    cout << left;
+    cout << setw(30) << " Key Up-up" << setw(30) << "Key Left-left" << setw(30) << "Key Right-right" << setw(30) << "Key Down-down" << endl;
+
+    cout << "________________________________________________________________________________________________________________________";
+
+    setCursorColor(BLACK, LIGHT_RED);
+    cout << right;
+    cout << setw(60) << "YOUR TASK" << endl;
+    cout << setw(64) << "KILL ALL SYMBOL!\n";
+
+
+    system("pause>Null");
+};
+
+void CREATOR1() {
+
+
+    system("cls");
+
+    setCursorPosition(55, 9);
+    setCursorColor(BLACK, LIGHT_YELLOW);
+
+    cout << "Myrzakhmet Sultanbek";
+
+    system("pause>Null");
+
+};
+
+
+void GAME() {
+
+
+    system("cls");
+    string name;
+    setCursorPosition(45, 11);
+    setCursorColor(BLACK, LIGHT_YELLOW);
+    cout << "Please write your name to start:";
+    cin >> name;
+    system("cls");
+
+
+    setCursorPosition(55, 11);
+    Player player;
+    const char icon = player.icon;
+    char gunIcon = player.gunIcon;
+    size_t pX = player.x;
+    size_t pY = player.y;
+    size_t gX = player.o;
+    size_t gY = player.p;
+
+    Enemy enemy;
+   
+    char enemyIcon = enemy.icon;
+
+
+
+    const size_t GAME_FIELD_X = 35;
+    const size_t GAME_FIELD_Y = 7;
+    const size_t GAME_FIELD_WIDTH = 50;
+    const size_t GAME_FIELD_HEIGHT = 25;
+
+
+    char gameField[GAME_FIELD_HEIGHT][GAME_FIELD_WIDTH] = {
+      "#################################################",
+      "#                                               #",
+      "#                                               #",
+      "#                                               #",
+      "#                                               #",
+      "#                                               #",
+      "#                                               #",
+      "#                                               #",
+      "#                                               #",
+      "#                                               #",
+      "#                                               #",
+      "#                                               #",
+      "#                                               #",
+      "#                                               #",
+      "#################################################"
+    };
+
+
+
+    gameField[pY][pX] = icon;
+
+    const char WALL_ICON = '#';
+
+    const size_t RANDOM_MAX_POSITION_X = 47;
+    const size_t RANDOM_MIN_POSITION_X = 3;
+    const size_t RANDOM_MAX_POSITION_Y = 13;
+    const size_t RANDOM_MIN_POSITION_Y = 3;
+    const size_t ENEMY_QUANTITY = 7;
+    const size_t FORWARD = 1;
+    const size_t DOWN = 2;
+    const size_t RIGHT = 3;
+    const size_t LEFT = 4;
+    const size_t RANDOM_MAX_DIRECTION = 5;
+    const size_t RANDOM_MIN_DIRECTION = 1;
+
+    long timerMsBundle = 50;
+    long timerMsBundleForGun = 35;
+    long nextTimerBundle = timerMsBundle;
+    long currentTime;
+    long nextTimerBundleForGun = timerMsBundleForGun;
+  
+    
+    size_t next = 0;
+    size_t points = 0;
+
+
+    bool oneTime = true;
+    bool shootUp = false;
+    bool shootDown = false;
+    bool shootRight = false;
+    bool shootLeft = false;
+    bool onlyOneShoot = true;
+    bool oneKill = true;
+    bool shootUpEnemy = true;
+
+
+    random_device random;
+
+ 
+    while (true) {
+        currentTime = clock();
+
+        if (next == ENEMY_QUANTITY) {
+            next = 0;
+        }
+
+        if (_kbhit()) {
+            int keyCode = _getch();
+
+            if (keyCode == Keys::KEY_DOWN && gameField[pY + 1][pX] != WALL_ICON) {
+                if (gameField[pY + 1][pX] != enemyIcon) {
+                    gameField[pY][pX] = ' ';
+                    ++pY;
+                    gameField[pY][pX] = player.icon;
+                }
+            }
+
+            else if (keyCode == Keys::KEY_UP && gameField[pY - 1][pX] != WALL_ICON) {
+                if (gameField[pY - 1][pX] != enemyIcon) {
+                    gameField[pY][pX] = ' ';
+                    --pY;
+                    gameField[pY][pX] = player.icon;
+                }
+            }
+
+            else if (keyCode == Keys::KEY_LEFT && gameField[pY][pX - 1] != WALL_ICON) {
+                if (gameField[pY][pX - 1] != enemyIcon) {
+                    gameField[pY][pX] = ' ';
+                    --pX;
+                    gameField[pY][pX] = player.icon;
+                }
+            }
+
+            else if (keyCode == Keys::KEY_RIGHT && gameField[pY][pX + 1] != WALL_ICON) {
+                if (gameField[pY][pX + 1] != enemyIcon) {
+                    gameField[pY][pX] = ' ';
+                    ++pX;
+                    gameField[pY][pX] = player.icon;
+                }
+            }
+            if (onlyOneShoot == true) {
+                if (keyCode == Keys::KEY_U && gameField[pY - 1][pX] != WALL_ICON && gameField[pY - 2][pX] != WALL_ICON) {
+                    gY = pY - 1;
+                    gX = pX;
+                    gunIcon = char(24);
+                    gameField[gY][gX] = gunIcon;
+                    shootUp = true;
+                }
+            }
+            if (onlyOneShoot == true) {
+                if (keyCode == Keys::KEY_SPACE && gameField[pY + 1][pX] != WALL_ICON && gameField[pY + 2][pX] != WALL_ICON) {
+                    gY = pY + 1;
+                    gX = pX;
+                    gunIcon = char(25);
+                    gameField[gY][gX] = gunIcon;
+                    shootDown = true;
+                }
+            }
+
+            if (onlyOneShoot == true) {
+                if (keyCode == Keys::KEY_R && gameField[pY][pX + 1] != WALL_ICON && gameField[pY][pX + 2] != WALL_ICON) {
+                    gY = pY;
+                    gX = pX + 1;
+                    gunIcon = char(26);
+                    gameField[gY][gX] = gunIcon;
+                    shootRight = true;
+                }
+            }
+            if (onlyOneShoot == true) {
+                if (keyCode == Keys::KEY_L && gameField[pY][pX - 1] != WALL_ICON && gameField[pY][pX - 2] != WALL_ICON) {
+                    gY = pY;
+                    gX = pX - 1;
+                    gunIcon = char(27);
+                    gameField[gY][gX] = gunIcon;
+                    shootLeft = true;
+                    if (gameField[gY - 1][gX] == enemyIcon) {
+                        ++points;
+                    }
+                }
+            }
+        }
+
+
+
+        if (shootUp == true) {
+            onlyOneShoot = false;
+            if (gameField[gY - 2][gX] == WALL_ICON) {
+                gunIcon = ' ';
+                onlyOneShoot = true;
+                shootUp = false;
+            }
+            if (gameField[gY - 1][gX] != WALL_ICON && currentTime >= timerMsBundleForGun) {
+                if (gameField[gY - 1][gX] == enemyIcon) {
+                    ++points;
+                }
+                gameField[gY][gX] = ' ';
+                --gY;
+                gameField[gY][gX] = gunIcon;
+                timerMsBundleForGun = timerMsBundleForGun + nextTimerBundleForGun;
+            }
+        }
+
+        if (shootDown == true) {
+            onlyOneShoot = false;
+            if (gameField[gY + 2][gX] == WALL_ICON) {
+                gunIcon = ' ';
+                onlyOneShoot = true;
+                shootDown = false;
+            }
+            if (gameField[gY + 1][gX] != WALL_ICON && currentTime >= timerMsBundleForGun) {
+                if (gameField[gY + 1][gX] == enemyIcon) {
+                    ++points;
+                }
+                gameField[gY][gX] = ' ';
+                ++gY;
+                gameField[gY][gX] = gunIcon;
+                timerMsBundleForGun = timerMsBundleForGun + nextTimerBundleForGun;
+
+            }
+        }
+
+        if (shootRight == true) {
+            onlyOneShoot = false;
+            if (gameField[gY][gX + 2] == WALL_ICON) {
+                gunIcon = ' ';
+                onlyOneShoot = true;
+                shootRight = false;
+            }
+
+            if (gameField[gY][gX + 1] != WALL_ICON && currentTime >= timerMsBundleForGun) {
+                if (gameField[gY][gX + 1] == enemyIcon) {
+                    ++points;
+                }
+
+                gameField[gY][gX] = ' ';
+                ++gX;
+                gameField[gY][gX] = gunIcon;
+                timerMsBundleForGun = timerMsBundleForGun + nextTimerBundleForGun;
+
+            }
+        }
+        if (shootLeft == true) {
+            onlyOneShoot = false;
+            if (gameField[gY][gX - 2] == WALL_ICON) {
+                gunIcon = ' ';
+                onlyOneShoot = true;
+                shootLeft = false;
+            }
+
+            if (gameField[gY][gX - 1] != WALL_ICON && currentTime >= timerMsBundleForGun) {
+                if (gameField[gY][gX - 1] == enemyIcon) {
+                    ++points;
+                }
+                gameField[gY][gX] = ' ';
+                --gX;
+                gameField[gY][gX] = gunIcon;
+                timerMsBundleForGun = timerMsBundleForGun + nextTimerBundleForGun;
+            }
+
+        }
+
+        for (size_t i = 0; i < GAME_FIELD_HEIGHT; ++i) {
+            setCursorPosition(GAME_FIELD_X, GAME_FIELD_Y + i);
+            for (size_t j = 0; j < GAME_FIELD_WIDTH - 1; ++j) {
+                if (gameField[i][j] == WALL_ICON) {
+                    setCursorColor(Colors::BLACK, Colors::LIGHT_GREEN);
+                    cout << char(178);
+                }
+
+                else if (gameField[i][j] == icon) {
+                    setCursorColor(Colors::BLACK, Colors::LIGHT_YELLOW);
+                    cout << icon;
+                }
+
+                else {
+                    cout << gameField[i][j];
+                }
+            }
+
+            if (oneTime == true) {
+                for (int k = 0; k < ENEMY_QUANTITY; ++k) {
+                    gameField[enemy.y[k] = random() % (RANDOM_MAX_POSITION_Y - RANDOM_MIN_POSITION_Y) + RANDOM_MIN_POSITION_Y][enemy.x[k] = random() % (RANDOM_MAX_POSITION_X - RANDOM_MIN_POSITION_X) + RANDOM_MIN_POSITION_X];
+                    if (gameField[enemy.y[k]][enemy.x[k]] != icon) {
+                        if (gameField[enemy.y[k]][enemy.x[k]] != enemyIcon) {
+                            gameField[enemy.y[k]][enemy.x[k]] = enemyIcon;
+                        }
+                    }
+                }
+            }
+            oneTime = false;
+        }
+
+        size_t direction = random() % (RANDOM_MAX_DIRECTION - RANDOM_MIN_DIRECTION) + RANDOM_MIN_DIRECTION;
+
+
+        if (direction == FORWARD) {
+            if (currentTime >= timerMsBundle) {
+                if (gameField[enemy.y[next] + 1][enemy.x[next]] != WALL_ICON) {
+                    if (gameField[enemy.y[next] + 1][enemy.x[next]] != icon) {
+                        if (gameField[enemy.y[next] + 1][enemy.x[next]] != enemyIcon) {
+                            gameField[enemy.y[next]][enemy.x[next]] = ' ';
+                            ++enemy.y[next];
+                            gameField[enemy.y[next]][enemy.x[next]] = enemyIcon;
+                            timerMsBundle = timerMsBundle + nextTimerBundle;
+                            ++next;
+                        }
+                    }
+                }
+            }
+        }
+
+        if (direction == DOWN) {
+            if (currentTime >= timerMsBundle) {
+                if (gameField[enemy.y[next] - 1][enemy.x[next]] != WALL_ICON) {
+                    if (gameField[enemy.y[next] - 1][enemy.x[next]] != icon) {
+                        if (gameField[enemy.y[next] - 1][enemy.x[next]] != enemyIcon) {
+                            gameField[enemy.y[next]][enemy.x[next]] = ' ';
+                            --enemy.y[next];
+                            gameField[enemy.y[next]][enemy.x[next]] = enemyIcon;
+                            timerMsBundle = timerMsBundle + nextTimerBundle;
+                            ++next;
+                        }
+                    }
+                }
+            }
+        }
+
+        if (direction == RIGHT) {
+            if (currentTime >= timerMsBundle) {
+                if (gameField[enemy.y[next]][enemy.x[next] + 1] != WALL_ICON) {
+                    if (gameField[enemy.y[next]][enemy.x[next] + 1] != icon) {
+                        if (gameField[enemy.y[next]][enemy.x[next] + 1] != enemyIcon) {
+                            gameField[enemy.y[next]][enemy.x[next]] = ' ';
+                            ++enemy.x[next];
+                            gameField[enemy.y[next]][enemy.x[next]] = enemyIcon;
+                            timerMsBundle = timerMsBundle + nextTimerBundle;
+                            ++next;
+
+                        }
+                    }
+                }
+            }
+        }
+
+        if (direction == LEFT) {
+            if (currentTime >= timerMsBundle) {
+                if (gameField[enemy.y[next]][enemy.x[next] - 1] != WALL_ICON) {
+                    if (gameField[enemy.y[next]][enemy.x[next] - 1] != icon) {
+                        if (gameField[enemy.y[next]][enemy.x[next] - 1] != enemyIcon) {
+                            gameField[enemy.y[next]][enemy.x[next]] = ' ';
+                            --enemy.x[next];
+                            gameField[enemy.y[next]][enemy.x[next]] = enemyIcon;
+                            timerMsBundle = timerMsBundle + nextTimerBundle;
+                            ++next;
+                        }
+                    }
+                }
+            }
+        }
+
+        if (points == 10) {
+            system("cls");
+            setCursorPosition(56, 6);
+            setCursorColor(BLACK, LIGHT_RED);
+            cout << "You won!";
+            system("pause>Nul");
+        }
+
+        if (currentTime >= 15000) {
+            system("cls");
+            setCursorPosition(56, 6);
+            setCursorColor(BLACK, LIGHT_RED);
+            cout << "Time is over!";
+            system("pause>Nul");
+        }
+
+        setCursorPosition(56, 6);
+        setCursorColor(BLACK, LIGHT_CYAN);
+        cout << name << ":" << points;
+    }
+   
+}
+
+
+                  
+int main() {
+        
+  const size_t MENU_ITEMS_SIZE = 4;
+    const size_t MENU_POS_X = 55;
+    const size_t MENU_POS_Y = 9;
+
+    int selectedMenuIndex = 0; 
+    int keyCode;
+
+    const char* menuItems[MENU_ITEMS_SIZE] = {
+      "Play",
+      "CREATOR",
+      "INSTRUCTION",
+      "Exit"
+
+    };
+
+    while (true) {
+       
+        for (int i = 0; i < MENU_ITEMS_SIZE; ++i) {
+            setCursorPosition(MENU_POS_X, MENU_POS_Y + i);
+            if (i == selectedMenuIndex) {
+                setCursorColor(0, 13);
+            }
+            else {
+                setCursorColor(0, 15);
+            }
+            cout << menuItems[i];
+        }
+
+        if (_kbhit()) {
+            keyCode = _getch(); 
+
+            if (keyCode == Keys::KEY_DOWN) {
+                selectedMenuIndex = (selectedMenuIndex < MenuItems::EXIT) ? selectedMenuIndex + 1 : MenuItems::PLAY;
+            }
+            else if (keyCode == Keys::KEY_UP) {
+                selectedMenuIndex = (selectedMenuIndex > MenuItems::PLAY) ? selectedMenuIndex - 1 : MenuItems::EXIT;
+            }
+            else if (keyCode == Keys::KEY_ENTER) {
+
+                if (selectedMenuIndex == MenuItems::EXIT) { //Если выбран последний пункт меню
+                    exit(EXIT_SUCCESS);
+                }
+                else if (selectedMenuIndex == MenuItems::PLAY) {
+                    GAME(); //Старт вашей программы
+                }
+                else if (selectedMenuIndex == MenuItems::CREATOR) {
+                    CREATOR1();
+                }
+                else if (selectedMenuIndex == MenuItems::INSTRUCTION) {
+                    INSTRUCTION1();
+                }
+
+            }
+        }
+    }
+
+    system("Pause > nul");
+}
